@@ -1,5 +1,6 @@
 import ConnectionDB from "./DB/connectionDB.js";
 import golbalErrorHandler from "./middleware/globalErrorHandler.js";
+import adminRouter from "./modules/Admin/admin.controller.js";
 import appointmentRouter from "./modules/Appointments/appointment.controller.js";
 import billingRouter from "./modules/Billing/billing.controller.js";
 import doctorRouter from "./modules/Doctors/doctor.controller.js";
@@ -14,6 +15,7 @@ const bootstrap = (app, express) => {
   app.use("/appointment", appointmentRouter);
   app.use("/billing", billingRouter);
   app.use("/medical-record", medicalRecordsRouter);
+  app.use("/admin", adminRouter);
   app.use("{/*demo}", (req, res, next) => {
     throw new Error(`Page not found on the url :${req.originalUrl}`);
   });

@@ -6,7 +6,7 @@ export const addBilling = async (req, res, next) => {
   try {
     const {
       patient,
-      appointment,
+      appointment, 
       doctor,
       items,
       totalAmount,
