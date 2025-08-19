@@ -1,10 +1,13 @@
 import { Router } from "express";
 import * as PS from "./patient.service.js";
+import * as PV from "./patient.validation.js";
 import { Authentication } from "../../middleware/authentication.js";
 import { authorization } from "../../middleware/authorization.js";
 import { systemRoles } from "../../utils/systemRoles.js";
+import {validation} from "../../middleware/validation.js"
 const patientRouter = Router();
-patientRouter.post("/add", PS.AddNewPatient);
+patientRouter.post("/signup",validation(PV.signUpSchema), PS.signUpPatient);
+patientRouter.post("/login", validation(PV.lognInSchema), PS.loginPatient);
 patientRouter.get(
   "/list",
   Authentication,
@@ -12,7 +15,7 @@ patientRouter.get(
   PS.listPatients
 );
 patientRouter.patch(
-  "/update/:id",
+  "/update/:id",validation(PV.updatePatientSchema),
   Authentication,
   authorization([
     systemRoles.ADMIN,
@@ -22,12 +25,11 @@ patientRouter.patch(
   PS.updatePatient
 );
 patientRouter.delete(
-  "/delete/:id",
+  "/delete/:id",validation(PV.deletePatientSchema),
   Authentication,
   authorization([
     systemRoles.ADMIN,
     systemRoles.SUPER_ADMIN,
-    systemRoles.PATIENT,
   ]),
   PS.deletePatient
 );

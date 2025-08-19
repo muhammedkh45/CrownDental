@@ -26,13 +26,16 @@ export const addMedicalNotes = async (req, res, next) => {
         cause: 404,
       });
     }
-    const uploaded = await cloudinary.uploader
-      .upload(req?.file?.path, {
-        folder: "SarahaApp/users",
-        use_filename: true,
-        resource_type: "auto",
-      })
-      .then((result) => console.log(result));
+    let medicalRecordImage = {};
+    if (req.file) {
+      const uploaded = await cloudinary.uploader
+        .upload(req.file.path, {
+          folder: `CrownDental/MedicalRecords/${patient}`,
+          use_filename: true,
+          resource_type: "auto",
+        });
+      medicalRecordImage = { public_id: uploaded.public_id, secure_url: uploaded.secure_url };
+    }
     const medicalNote = await medicalRecordModel.create({
       patient,
       doctor,
@@ -44,6 +47,7 @@ export const addMedicalNotes = async (req, res, next) => {
       allergies,
       pastMedicalHistory,
       notes,
+      image: medicalRecordImage,
       recordDate,
     });
     return res
@@ -71,6 +75,18 @@ export const updateMedicalNote = async (req, res, next) => {
 
     if (!medicalNote) {
       throw new Error("Medical record not found", { cause: 404 });
+    }
+    if (req.file) {
+      if (medicalNote.image && medicalNote.image.public_id) {
+        await cloudinary.uploader.destroy(medicalNote.image.public_id);
+      }
+      const uploaded = await cloudinary.uploader
+        .upload(req.file.path, {
+          folder: `CrownDental/MedicalRecords/${medicalNote.patient}`,
+          use_filename: true,
+          resource_type: "auto",
+        });
+      medicalNote.image = { public_id: uploaded.public_id, secure_url: uploaded.secure_url };
     }
 
     medicalNote.diagnosis = diagnosis || medicalNote.diagnosis;

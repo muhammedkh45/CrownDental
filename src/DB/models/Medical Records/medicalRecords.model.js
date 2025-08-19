@@ -44,9 +44,6 @@ const medicalRecordSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    img: {
-      type: string,
-    },
   },
   { timestamps: true }
 );

@@ -2,31 +2,42 @@ import { doctorModel } from "../../DB/models/Doctors/doctor.model.js";
 import { patientModel } from "../../DB/models/Patients/patient.model.js";
 import * as Encryption from "../../utils/Encryption/index.js";
 import * as Hashing from "../../utils/Hash/index.js";
-import dotenv from "dotenv";
-import path from "path";
-dotenv.config({ path: path.resolve("src/config/.env") });
-export const AddNewPatient = async (req, res, next) => {
+import { systemRoles } from "../../utils/systemRoles.js";
+import * as Tokenization from "../../utils/token/index.js";
+export const signUpPatient = async (req, res, next) => {
   try {
-    const { name, phone, address, gender, dob, exMedicalStatus, doctor_id } =
-      req.body;
-    const phoneHash = await Hashing.fixedHash(phone);
-    const exists = await patientModel.findOne({ phoneHash });
+    const {
+      name,
+      email,
+      password,
+      phone,
+      address,
+      gender,
+      dob,
+      exMedicalStatus,
+      doctor_id,
+    } = req.body;
+    const exists = await patientModel.findOne({ email });
     if (exists) {
-      throw new Error("Patient already exists", { cause: 409 });
+      throw new Error("Email already exists", { cause: 409 });
     }
     const doctor = await doctorModel.findById(doctor_id).select(" name ssn");
     if (!doctor) {
       throw new Error("Doctor not Exist", { cause: 409 });
     }
-
+    const hashedPassword = await Hashing.hash({
+      plainText: password,
+      saltRounds: 10,
+    });
     const ciphertext = await Encryption.encrypt({
       plainText: phone,
       signature: process.env.JWT_SECRET,
     });
     const patientData = {
       name,
+      email,
+      password: hashedPassword,
       phone: ciphertext,
-      phoneHash,
       address,
       gender,
       doctor: doctor_id,
@@ -43,6 +54,36 @@ export const AddNewPatient = async (req, res, next) => {
       message: "Patient added successfully.",
       patient: patientResponse,
     });
+  } catch (error) {
+    throw new Error(error.message, { cause: error.cause });
+  }
+};
+export const loginPatient = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    const patient = await patientModel.findOne({ email });
+    if (!patient) {
+      throw new Error("Patient not found", { cause: 404 });
+    }
+    const isCorrect = await Hashing.compare({
+      plainText: password,
+      cipherText: patient.password,
+    });
+    if (!isCorrect)
+      throw new Error("Email or Password is Invalid", { cause: 401 });
+
+    const token = await Tokenization.generateToken({
+      payload: {
+        id: patient._id,
+        email: patient.email,
+        role: systemRoles.PATIENT,
+      },
+      Signature: process.env.JWT_PATIENT_SECRET,
+      options: { expiresIn: "1h" },
+    });
+    return res
+      .status(200)
+      .json({ message: "Login success", accessToken: token });
   } catch (error) {
     throw new Error(error.message, { cause: error.cause });
   }

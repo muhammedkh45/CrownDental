@@ -1,9 +1,8 @@
 import { patientModel } from "../DB/models/Patients/patient.model.js";
 import { doctorModel } from "../DB/models/Doctors/doctor.model.js";
-import dotenv from "dotenv";
-import path from "node:path";
+
 import { verifyToken } from "../utils/token/verifyToken.js";
-dotenv.config({ path: path.resolve("src/config/.env") });
+import { adminModel } from "../DB/models/Admins/admin.model.js";
 
 export const Authentication = async (req, res, next) => {
   try {
@@ -27,7 +26,7 @@ export const Authentication = async (req, res, next) => {
         break;
       case "admin":
         Signature = process.env.JWT_ADMIN_SECRET;
-        userModelToUse = adminModel
+        userModelToUse = adminModel;
         break;
       case "doctor":
         Signature = process.env.JWT_DOCTOR_SECRET;

@@ -26,7 +26,7 @@ export const reserveAppointment = async (req, res, next) => {
       .status(201)
       .json({ messsage: "Appointment added succefully", appointment });
   } catch (error) {
-    throw new Error(error.messsage, { cause: error.cause });
+    throw new Error(error.message, { cause: error.cause });
   }
 };
 export const listReservations = async (req, res, next) => {
@@ -63,8 +63,12 @@ export const updateReservation = async (req, res, next) => {
       reservationData.doctor = doctor;
     }
     if (appointmentTime) {
+      const appointmentDate = new Date(appointmentTime);
+      if (appointmentDate.getTime() < Date.now()) {
+        throw new Error("Please enter a valid time", { cause: 400 });
+      }
       const isAppointment = await appointmentModel.findOne({ appointmentTime });
-      if (!isAppointment) {
+      if (isAppointment) {
         throw new Error("This time is already reserved try anthor time", {
           cause: 404,
         });
@@ -80,7 +84,7 @@ export const updateReservation = async (req, res, next) => {
       .status(200)
       .json({ messsage: "Reservation updated successfully", reservation });
   } catch (error) {
-    throw new Error(error.messsage, { cause: error.cause });
+    throw new Error(error.message, { cause: error.cause });
   }
 };
 export const deleteReservation = async (req, res, next) => {

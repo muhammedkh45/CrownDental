@@ -1,10 +1,28 @@
 import counterModel from "../../DB/models/Doctors/counter.model.js";
 import { doctorModel } from "../../DB/models/Doctors/doctor.model.js";
 import * as Encryption from "../../utils/Encryption/index.js";
-export const AddNewDoctor = async (req, res, next) => {
+import * as Hashing from "../../utils/Hash/index.js";
+import { systemRoles } from "../../utils/systemRoles.js";
+import * as Tokenization from "../../utils/token/index.js";
+export const signupDoctor = async (req, res, next) => {
   try {
-    const { name, phone, address, gender, dob, specialization } = req.body;
-    const phoneHash = await Hashing.fixedHash(phone);
+    const {
+      name,
+      email,
+      password,
+      phone,
+      address,
+      gender,
+      dob,
+      specialization,
+    } = req.body;
+    if (await doctorModel.findOne({ email }))
+      throw new Error("Email already exist", { cause: 409 });
+
+    const hashedPassword = await Hashing.hash({
+      plainText: password,
+      saltRounds: 10,
+    });
     const ciphertext = await Encryption.encrypt({
       plainText: phone,
       signature: process.env.JWT_SECRET,
@@ -16,11 +34,12 @@ export const AddNewDoctor = async (req, res, next) => {
     );
     const doctorData = {
       name: name,
+      email,
+      password: hashedPassword,
       phone: ciphertext,
       address: address,
       gender: gender,
       specialization: specialization,
-      phoneHash,
       ssn: `DOC-${new Date().getFullYear()}-${String(counter.value).padStart(
         4,
         "0"
@@ -32,6 +51,33 @@ export const AddNewDoctor = async (req, res, next) => {
       message: "Doctor added successfully.",
       doctor,
     });
+  } catch (error) {
+    throw new Error(error.message, { cause: error.cause });
+  }
+};
+export const loginDoctor = async (req, res, next) => {
+  try {
+    const { ssn, password } = req.body;
+    const doctor = await doctorModel.findOne({ ssn });
+    if (!doctor) {
+      throw new Error("Doctor not found", { cause: 404 });
+    }
+    const isCorrect = await Hashing.compare({
+      plainText: password,
+      cipherText: doctor.password,
+    });
+    const token = await Tokenization.generateToken({
+      payload: {
+        id: doctor._id,
+        ssn: doctor.ssn,
+        role: systemRoles.DOCTOR,
+      },
+      Signature: process.env.JWT_DOCTOR_SECRET,
+      options: { expiresIn: "1h" },
+    });
+    return res
+      .status(200)
+      .json({ message: "Login success", accessToken: token });
   } catch (error) {
     throw new Error(error.message, { cause: error.cause });
   }
@@ -102,9 +148,9 @@ export const updateDoctor = async (req, res, next) => {
 export const deleteDoctor = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const deletedDoctor = await doctorModel.findByIdAndDelete(id).select(
-      "name ssn"
-    );
+    const deletedDoctor = await doctorModel
+      .findByIdAndDelete(id)
+      .select("name ssn");
     if (!deletedDoctor) throw new Error("Doctor not found", { cause: 404 });
 
     return res

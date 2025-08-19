@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const appointmentStatus = {
+export const appointmentStatus = {
   reserved: "reserved",
   done: "done",
   cancelled: "cancelled",
@@ -24,7 +24,7 @@ const appointmentSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: Object.values(appointmentStatus),
-      required: true,
+      default: appointmentStatus.reserved,
     },
   },
   { timestamps: true }

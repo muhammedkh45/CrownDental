@@ -1,4 +1,4 @@
-import { billingModel } from "../../DB/models/Billing/billing.model";
+import { billingModel } from "../../DB/models/Billing/billing.model.js";
 import { patientModel } from "../../DB/models/Patients/patient.model.js";
 import { doctorModel } from "../../DB/models/Doctors/doctor.model.js";
 import { appointmentModel } from "../../DB/models/Appointments/appointment.model.js";
@@ -55,7 +55,7 @@ export const listPatientBills = async (req, res, next) => {
         cause: 404,
       });
     }
-    const billis = await patientModel.find({ patient: id });
+    const billis = await billingModel.find({ patient: id });
     return res.status(201).json({ message: "Patient  list of billis", billis });
   } catch (error) {
     throw new Error(error.message, { cause: error.cause });
@@ -117,10 +117,10 @@ export const updateBilling = async (req, res, next) => {
     if (discount) billingData.discount = discount;
     billingData.netAmount = totalAmount - discount;
     if (paymentStatus) billingData.paymentStatus = paymentStatus;
-    if (paymentMethod) billingData.paymentMethod = paymentMethod;
-    if (billingDate) billingData.billingData = billingData;
+    if (paymentMethod) billingData.paymentMethod = paymentMethod; // Corrected: Should be billingData.billingDate
+    if (billingDate) billingData.billingDate = billingDate; // Corrected: Should be billingData.billingDate
 
-    const billing = await patientModel.updateOne({ _id: id }, billingDate, {
+    const billing = await billingModel.updateOne({ _id: id }, billingData, {
       new: true,
     });
     return res

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { systemRoles } from "../../../utils/systemRoles.js";
 const doctorGender = {
   male: "male",
   female: "female",
@@ -8,6 +9,14 @@ const doctorSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, "Name is required"],
+    },
+    email:{
+      type:String,
+      required:true
+    },
+    password:{
+      type:String,
+      required:true
     },
     phone: {
       type: String,
@@ -33,10 +42,12 @@ const doctorSchema = new mongoose.Schema(
       type: String,
       required: [true, "Specialization is required"],
     },
+    role:{
+      type:String,
+      enum:["doctor"],
+      default:systemRoles.DOCTOR
+    }
   },
-  {
-    strict: false,
-  }
 );
 
 export const doctorModel =

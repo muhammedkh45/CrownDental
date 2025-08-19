@@ -9,6 +9,14 @@ const patientSchema = new mongoose.Schema(
       type: String,
       required: [true, "Name is required"],
     },
+    email: {
+      type: String,
+      required: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
     phone: {
       type: String,
       required: [true, "Phone is required"],
@@ -32,8 +40,12 @@ const patientSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "doctor",
     },
+    role:{
+      type:String,
+      enum:["patient"],
+      default:"patient"
+    }
   },
-  { strict: false }
 );
 
 export const patientModel =

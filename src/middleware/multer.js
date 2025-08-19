@@ -1,7 +1,7 @@
 import multer from "multer";
 import fs from "node:fs";
 import path from "node:path";
-export const MulterLocal = (customPath, _allowedTypes) => {
+export const MulterLocal = (customPath,allowedTypes) => {
   const fullPath = `uploads/${customPath}`;
   if (!fs.existsSync(fullPath)) {
     fs.mkdirSync(fullPath, { recursive: true });
@@ -16,16 +16,23 @@ export const MulterLocal = (customPath, _allowedTypes) => {
     },
   });
   const fileFilter = (req, file, cb) => {
-    const allowedTypes = _allowedTypes || /jpeg|jpg|png|gif/;
-    const extname = allowedTypes.test(
+    const allowedExtensions = allowedTypes;
+    const allowedMimeTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "text/plain",
+    ];
+    const extname = allowedExtensions.test(
       path.extname(file.originalname).toLowerCase()
     );
-    const mimetype = allowedTypes.test(file.mimetype);
+    const mimetype = allowedMimeTypes.includes(file.mimetype);
 
     if (extname && mimetype) {
       cb(null, true);
     } else {
-      cb(new Error("Only image files are allowed!"));
+      cb(new Error("Only jpeg, jpg, png, gif, or txt files are allowed!"),false);
     }
   };
 

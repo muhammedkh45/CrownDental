@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
-const paymentStatus = {
+export const paymentStatus = {
   pending: "pending",
   paid: "paid",
   partial: "partial",
   cancelled: "cancelled",
 };
-const paymentMethods = {
+export const paymentMethods = {
   cash: "cash",
   credit_card: "credit_card",
   debit_card: "debit_card",

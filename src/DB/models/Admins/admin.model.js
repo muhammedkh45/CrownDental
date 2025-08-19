@@ -27,7 +27,7 @@ const adminSchema = new mongoose.Schema(
     role: {
       type: String,
       default: "admin",
-      enum: ["admin"],
+      enum: ["admin","super_admin"],
     },
     isEmailConfirmed: {
       type: Boolean,
@@ -47,4 +47,4 @@ const adminSchema = new mongoose.Schema(
   }
 );
 
-export const adminModel = mongoose.model.admin ||model("admin", adminSchema);
+export const adminModel = mongoose.model.admin || mongoose.model("admin", adminSchema);

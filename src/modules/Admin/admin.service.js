@@ -1,14 +1,20 @@
 import { adminModel } from "../../DB/models/Admins/admin.model.js";
 import * as Hashing from "../../utils/Hash/index.js"
-import cloudinary from "../../utils/cloudinary.js";
+import * as Encryption  from "../../utils/Encryption/index.js"
+import * as Tokenization  from "../../utils/token/index.js"
+import cloudinary from "../../utils/cloudinary/index.js";
 
-export const addAdmin = async (req, res, next) => {
+export const signUpAdmin = async (req, res, next) => {
   const { userName, email, password, phone, address, role } = req.body;
   const isEmailExist = await adminModel.findOne({ email });
   if (isEmailExist) {
     throw new Error("Email already exist", { cause: 409 });
   }
   const hashedPassword = await Hashing.hash({plainText:password, saltRounds:10});
+  const encryptedPhone = await Encryption.encrypt({
+    plainText: phone,
+    signature: process.env.JWT_SECRET,
+  });
   if (!req.file) {
     throw new Error("Image is required", { cause: 400 });
   }
@@ -22,7 +28,7 @@ export const addAdmin = async (req, res, next) => {
     userName,
     email,
     password: hashedPassword,
-    phone,
+    phone: encryptedPhone,
     address,
     role,
     image: { secure_url, public_id },
@@ -33,10 +39,39 @@ export const addAdmin = async (req, res, next) => {
   res.status(201).json({ message: "Admin added successfully", newAdmin });
 };
 
+export const login = async (req, res, next) => {
+  const { email, password } = req.body;
+  const admin = await adminModel.findOne({ email });
+  if (!admin) {
+    throw new Error("Invalid email or password", { cause: 404 });
+  }
+  const isPasswordMatched = await Hashing.compare({
+    plainText: password,
+    cipherText: admin.password,
+  });
+  if (!isPasswordMatched) {
+    throw new Error("Invalid email or password", { cause: 404 });
+  }
+  
+  const token = await Tokenization.generateToken({
+    payload: {
+      id: admin._id,
+      role: admin.role,
+      email: admin.email,
+    },
+    Signature: process.env.JWT_ADMIN_SECRET,
+    options:{expiresIn: "1h"},
+  });
+  admin.isEmailConfirmed = true;
+  await admin.save();
+  return res.status(200).json({ message: "Login success", accessToken:token });
+};
+
+
 export const updateAdmin = async (req, res, next) => {
   const { id } = req.params;
   const { userName, email, phone, address, role } = req.body;
-  const adminExist = await adminModel.findById(id);
+  const adminExist = await adminModel.findById(id).select(" userName email ");
   if (!adminExist) {
     throw new Error("Admin not found", { cause: 404 });
   }

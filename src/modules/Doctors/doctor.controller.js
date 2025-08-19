@@ -4,7 +4,8 @@ import { Authentication } from "../../middleware/authentication.js";
 import { authorization } from "../../middleware/authorization.js";
 import { systemRoles } from "../../utils/systemRoles.js";
 const doctorRouter = Router();
-doctorRouter.post("/add", DC.AddNewDoctor);
+doctorRouter.post("/signup", DC.signupDoctor);
+doctorRouter.post("/login", DC.loginDoctor);
 doctorRouter.get(
   "/list",
   Authentication,
